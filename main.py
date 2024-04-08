@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from app import models
-from app.dependencies import SessionLocal, engine
 from app.routes import router
 
 app = FastAPI()

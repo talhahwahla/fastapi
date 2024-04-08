@@ -3,15 +3,15 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 
-from . import models, schemas
+from . import models
 from . import dependencies
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
 
-@router.post("/signup", response_model=schemas.Token)
-def signup(user: schemas.UserCreate, db: Session = Depends(dependencies.get_db)):
+@router.post("/signup", response_model=models.Token)
+def signup(user: models.UserCreate, db: Session = Depends(dependencies.get_db)):
     # Check if the email is already registered
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     if existing_user:
@@ -29,8 +29,8 @@ def signup(user: schemas.UserCreate, db: Session = Depends(dependencies.get_db))
     return {"token": access_token}
 
 
-@router.post("/login", response_model=schemas.Token)
-def login(user: schemas.UserLogin, db: Session = Depends(dependencies.get_db)):
+@router.post("/login", response_model=models.Token)
+def login(user: models.UserLogin, db: Session = Depends(dependencies.get_db)):
     # Check if the user with the provided email exists
     user_db = db.query(models.User).filter(models.User.email == user.email).first()
     if not user_db:
@@ -46,8 +46,8 @@ def login(user: schemas.UserLogin, db: Session = Depends(dependencies.get_db)):
 
     return {"token": access_token}
 
-@router.post("/add_post", response_model=schemas.PostResponse)
-def add_post(post: schemas.PostCreate, token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
+@router.post("/add_post", response_model=models.PostResponse)
+def add_post(post: models.PostCreate, token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
     # Get the user ID from the token
     user_id = dependencies.get_user_id_from_token(token)
 
@@ -67,7 +67,7 @@ def add_post(post: schemas.PostCreate, token: str = Depends(dependencies.get_tok
         }
     }
 
-@router.get("/get_posts", response_model=List[schemas.PostResponse])
+@router.get("/get_posts", response_model=List[models.PostResponse])
 def get_posts(token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
     # Get the user ID from the token
     user_id = dependencies.get_user_id_from_token(token)
