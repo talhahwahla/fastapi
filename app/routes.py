@@ -32,9 +32,20 @@ def signup(user: schemas.UserCreate, db: Session = Depends(dependencies.get_db))
 
 @router.post("/login", response_model=schemas.Token)
 def login(user: schemas.UserLogin, db: Session = Depends(dependencies.get_db)):
-    # Implement login logic here
-    # Verify user credentials and return a token
-    return {"token": "your_token_here"}
+    # Check if the user with the provided email exists
+    user_db = db.query(models.User).filter(models.User.email == user.email).first()
+    if not user_db:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+    
+    # Check if the password is correct
+    if not dependencies.verify_password(user.password, user_db.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+    
+    # Generate a JWT token for the user
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = dependencies.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+
+    return {"token": access_token}
 
 
 @router.post("/add_post", response_model=schemas.PostResponse)
