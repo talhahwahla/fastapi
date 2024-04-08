@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import declarative_base, relationship
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -60,21 +60,3 @@ class PostResponse(BaseModel):
     class Config:
         orm_mode = True
 
-
-# Create database engine
-SQLALCHEMY_DATABASE_URL = "mysql://user:password@localhost/db_name"
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Create tables
-Base.metadata.create_all(bind=engine)
-
-# Create session
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
