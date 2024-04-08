@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import timedelta
@@ -6,16 +6,28 @@ from datetime import timedelta
 from . import models, schemas
 from .models import SessionLocal, engine
 from . import dependencies
+from .config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
 
 @router.post("/signup", response_model=schemas.Token)
 def signup(user: schemas.UserCreate, db: Session = Depends(dependencies.get_db)):
-    # Implement signup logic here
-    # Create the user in the database
-    # Return a token
-    return {"token": "your_token_here"}
+    # Check if the email is already registered
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+    # Create a new user in the database
+    new_user = models.User(email=user.email, password=user.password)
+    db.add(new_user)
+    db.commit()
+
+    # Generate a JWT token for the new user
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = dependencies.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+
+    return {"token": access_token}
 
 
 @router.post("/login", response_model=schemas.Token)
