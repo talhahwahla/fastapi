@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from . import models, schemas
 from .models import SessionLocal, engine
@@ -47,13 +47,26 @@ def login(user: schemas.UserLogin, db: Session = Depends(dependencies.get_db)):
 
     return {"token": access_token}
 
-
 @router.post("/add_post", response_model=schemas.PostResponse)
 def add_post(post: schemas.PostCreate, token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
-    # Implement add_post logic here
-    # Add the post to the database and return the post ID
-    return {"id": 1, "text": post.text, "created_at": "2024-04-09T12:00:00Z", "author": {"id": 1, "email": "user@example.com"}}
+    # Get the user ID from the token
+    user_id = dependencies.get_user_id_from_token(token)
 
+    # Create a new post in the database
+    new_post = models.Post(text=post.text, created_at=datetime.utcnow(), author_id=user_id)
+    db.add(new_post)
+    db.commit()
+
+    # Return the created post
+    return {
+        "id": new_post.id,
+        "text": new_post.text,
+        "created_at": new_post.created_at,
+        "author": {
+            "id": user_id,
+            "email": dependencies.get_email_from_token(token)
+        }
+    }
 
 @router.get("/get_posts", response_model=List[schemas.PostResponse])
 def get_posts(token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
