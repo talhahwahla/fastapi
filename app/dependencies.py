@@ -1,9 +1,13 @@
 import jwt
+from jwt import PyJWTError
 from datetime import datetime, timedelta
 from .config import SECRET_KEY, ALGORITHM, SQLALCHEMY_DATABASE_URL
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import create_engine
 from passlib.context import CryptContext
+from typing import Optional
+from fastapi import HTTPException, Security
+from fastapi.security import OAuth2PasswordBearer
 
 # Create database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -43,3 +47,18 @@ def verify_password(plain_password: str, hashed_password: str):
     Verify that the plain password matches the hashed password.
     """
     return pwd_context.verify(plain_password, hashed_password)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def get_user_id_from_token(token: str = Security(oauth2_scheme)):
+    """
+    Extract the user ID from the JWT token.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: Optional[int] = int(payload.get("sub"))
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
