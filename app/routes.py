@@ -89,6 +89,16 @@ def get_posts(token: str = Depends(dependencies.get_token), db: Session = Depend
 
 @router.delete("/delete_post")
 def delete_post(post_id: int, token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
-    # Implement delete_post logic here
+    # Get the user ID from the token
+    user_id = dependencies.get_user_id_from_token(token)
+
+    # Check if the post exists and belongs to the user
+    post = db.query(models.Post).filter(models.Post.id == post_id, models.Post.author_id == user_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
     # Delete the post from the database
+    db.delete(post)
+    db.commit()
+
     return {"message": "Post deleted successfully"}
