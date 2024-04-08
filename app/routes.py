@@ -70,10 +70,22 @@ def add_post(post: schemas.PostCreate, token: str = Depends(dependencies.get_tok
 
 @router.get("/get_posts", response_model=List[schemas.PostResponse])
 def get_posts(token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
-    # Implement get_posts logic here
-    # Retrieve all posts for the user from the database
-    return [{"id": 1, "text": "Post 1", "created_at": "2024-04-09T12:00:00Z", "author": {"id": 1, "email": "user@example.com"}}]
+    # Get the user ID from the token
+    user_id = dependencies.get_user_id_from_token(token)
 
+    # Retrieve all posts for the user from the database
+    posts = db.query(models.Post).filter(models.Post.author_id == user_id).all()
+
+    # Return the posts
+    return [{
+        "id": post.id,
+        "text": post.text,
+        "created_at": post.created_at,
+        "author": {
+            "id": post.author_id,
+            "email": dependencies.get_email_from_token(token)
+        }
+    } for post in posts]
 
 @router.delete("/delete_post")
 def delete_post(post_id: int, token: str = Depends(dependencies.get_token), db: Session = Depends(dependencies.get_db)):
