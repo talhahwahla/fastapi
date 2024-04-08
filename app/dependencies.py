@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from .config import SECRET_KEY, ALGORITHM, SQLALCHEMY_DATABASE_URL
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import create_engine
+from passlib.context import CryptContext
 
 # Create database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -32,3 +33,13 @@ def create_access_token(data: dict, expires_delta: timedelta):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+# Create a new instance of CryptContext for hashing and verifying passwords
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str):
+    """
+    Verify that the plain password matches the hashed password.
+    """
+    return pwd_context.verify(plain_password, hashed_password)
