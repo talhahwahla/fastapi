@@ -28,6 +28,7 @@ def get_db():
     finally:
         db.close()
 
+
 def create_access_token(data: dict, expires_delta: timedelta):
     """
     Create a JWT access token with the provided data and expiration time.
@@ -48,6 +49,7 @@ def verify_password(plain_password: str, hashed_password: str):
     """
     return pwd_context.verify(plain_password, hashed_password)
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_user_id_from_token(token: str = Security(oauth2_scheme)):
@@ -60,5 +62,19 @@ def get_user_id_from_token(token: str = Security(oauth2_scheme)):
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_id
+    except PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def get_email_from_token(token: str = Security(oauth2_scheme)):
+    """
+    Extract the email from the JWT token.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: Optional[str] = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return email
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
