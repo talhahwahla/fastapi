@@ -78,3 +78,17 @@ def get_email_from_token(token: str = Security(oauth2_scheme)):
         return email
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+def get_token(authorization: str = Security(oauth2_scheme)):
+    """
+    Extract the JWT token from the Authorization header.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=403, detail="Invalid authentication scheme")
+        return token
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Invalid authorization header")
+    
