@@ -4,14 +4,6 @@ from app.routes import router
 
 app = FastAPI()
 
-# Dependency for getting a database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # Include the routes
 app.include_router(router)
 

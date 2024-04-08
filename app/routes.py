@@ -4,7 +4,6 @@ from typing import List
 from datetime import datetime, timedelta
 
 from . import models, schemas
-from .models import SessionLocal, engine
 from . import dependencies
 from .config import ACCESS_TOKEN_EXPIRE_MINUTES
 
